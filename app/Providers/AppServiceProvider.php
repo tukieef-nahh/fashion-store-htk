@@ -5,6 +5,10 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use App\Models\DanhMuc;
 use App\Observers\DanhMucObserver;
+use App\Ray\AppModule;
+use Ray\Di\DiInterface;
+use Ray\Di\Injector;
+use App\Services\SanPhamService;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -13,7 +17,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $injector = new Injector(new AppModule());
+        $this->app->singleton(SanPhamService::class, function () use ($injector) {
+            return $injector->getInstance(SanPhamService::class);
+        });
     }
 
     /**
