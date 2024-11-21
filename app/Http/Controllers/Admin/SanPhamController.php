@@ -3,8 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use App\Services\SanPhamService;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
@@ -15,21 +16,18 @@ use App\Models\ThuongHieu;
 //JointPoint
 class SanPhamController extends Controller
 {
+
+    protected $sanPhamService;
+
+    public function __construct(SanPhamService $sanPhamService)
+    {
+        $this->sanPhamService = $sanPhamService;
+    }
+
+
     public function index(Request $request)
     {
-        $query = SanPham::with(['DanhMuc', 'ThuongHieu']);
-
-        if ($request->has('SearchString') && !empty($request->SearchString)) {
-            $query->where('tenSP', 'like', '%' . $request->SearchString . '%');
-        }
-
-        $sortField = $request->get('sortField', 'id');
-        $sortOrder = $request->get('sortOrder', 'asc');
-        if (in_array($sortField, ['tenSP', 'gia', 'danh_muc_id', 'thuong_hieu_id'])) {
-            $query->orderBy($sortField, $sortOrder);
-        }
-
-        $sanphams = $query->paginate(5);
+        $sanphams = $this->sanPhamService->index($request);
 
         return view('admin.sanpham.index', compact('sanphams'))->with('i', ($request->input('page', 1) - 1) * 5);
     }
@@ -73,24 +71,10 @@ class SanPhamController extends Controller
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        $slug = Str::slug($request->input('tenSP'));
-        $imageName = null;
-            
-        if ($request->hasFile('image')) {
-            $imageName = Str::slug($request->input('tenSP')) . '-' . time() . '.' . $request->image->extension();
-            $request->image->move(public_path('source/image/sanpham'), $imageName);
-        }
+        $data = $request->all();
+        $data['image'] = $request->file('image');
 
-        SanPham::create([
-            'tenSP' => $request->input('tenSP'),
-            'slug' => $slug,
-            'moTa' => $request->input('moTa'),
-            'gia' => $request->input('gia'),
-            'soLuong' => $request->input('soLuong'),
-            'danh_muc_id' => $request->input('danh_muc_id'),
-            'thuong_hieu_id' => $request->input('thuong_hieu_id'),
-            'image' => $imageName,
-        ]);
+        $this->sanPhamService->store($data);
 
         return redirect()->route('sanpham.index')->with('success', 'Sản phẩm đã được thêm thành công!');
     }
@@ -142,51 +126,60 @@ class SanPhamController extends Controller
             return redirect()->back()->withErrors($validator)->withInput();
         }
     
-        $sanpham = SanPham::findOrFail($id);
-        $newImageName = null;
+        // $sanpham = SanPham::findOrFail($id);
+        // $newImageName = null;
 
-        if ($request->hasFile('image')) {
-            $oldImagePath = public_path('source/image/sanpham/' . $sanpham->image);
-            if (file_exists($oldImagePath)) {
-                unlink($oldImagePath);
-            }
+        // if ($request->hasFile('image')) {
+        //     $oldImagePath = public_path('source/image/sanpham/' . $sanpham->image);
+        //     if (file_exists($oldImagePath)) {
+        //         unlink($oldImagePath);
+        //     }
 
-            $newImageName = Str::slug($request->input('tenSP')) . '-' . time() . '.' . $request->image->extension();
-            $request->image->move(public_path('source/image/sanpham'), $newImageName);
-            $sanpham->image = $newImageName;
-        } else {
-            $newImageName = $sanpham->image;
-        }
+        //     $newImageName = Str::slug($request->input('tenSP')) . '-' . time() . '.' . $request->image->extension();
+        //     $request->image->move(public_path('source/image/sanpham'), $newImageName);
+        //     $sanpham->image = $newImageName;
+        // } else {
+        //     $newImageName = $sanpham->image;
+        // }
 
 
-        $slug = Str::slug($request->input('tenSP'));
+        // $slug = Str::slug($request->input('tenSP'));
 
-        $sanpham->tenSP = $request->input('tenSP');
-        $sanpham->slug = Str::slug($request->input('tenSP'));
-        $sanpham->moTa = $request->input('moTa');
-        $sanpham->gia = $request->input('gia');
-        $sanpham->soLuong = $request->input('soLuong');
-        $sanpham->danh_muc_id = $request->input('danh_muc_id');
-        $sanpham->thuong_hieu_id = $request->input('thuong_hieu_id');
-        $sanpham->image = $newImageName;
+        // $sanpham->tenSP = $request->input('tenSP');
+        // $sanpham->slug = Str::slug($request->input('tenSP'));
+        // $sanpham->moTa = $request->input('moTa');
+        // $sanpham->gia = $request->input('gia');
+        // $sanpham->soLuong = $request->input('soLuong');
+        // $sanpham->danh_muc_id = $request->input('danh_muc_id');
+        // $sanpham->thuong_hieu_id = $request->input('thuong_hieu_id');
+        // $sanpham->image = $newImageName;
         
-        $sanpham->save();
+        // $sanpham->save();
+
+        $data = $request->all();
+        $data['image'] = $request->file('image');
+
+        $sanpham = $this->sanPhamService->update(SanPham::findOrFail($id), $data);
 
         return redirect()->route('sanpham.index')->with('success', 'Sản phẩm đã được cập nhật thành công!');
     }
 
     public function destroy($id)
     {
-        $sanPham = SanPham::findOrFail($id);
+        // $sanPham = SanPham::findOrFail($id);
 
-        $imagePath = public_path('source/image/sanpham/' . $sanPham->image);
+        // $imagePath = public_path('source/image/sanpham/' . $sanPham->image);
 
-        $imagePath = public_path('source/image/sanpham/' . $sanPham->image);
-        if ($sanPham->image && file_exists($imagePath)) {
-            unlink($imagePath);
-        }
+        // $imagePath = public_path('source/image/sanpham/' . $sanPham->image);
+        // if ($sanPham->image && file_exists($imagePath)) {
+        //     unlink($imagePath);
+        // }
     
-        $sanPham->delete();
+        // $sanPham->delete();
+
+        $sanpham = SanPham::findOrFail($id);
+
+        $this->sanPhamService->destroy($sanpham);
     
         return response()->json(['success' => 'Sản phẩm đã được xóa thành công.']);
     }
