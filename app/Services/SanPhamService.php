@@ -79,11 +79,9 @@ class SanPhamService
     public function destroy($sanpham)
     {
         $imagePath = public_path('source/image/sanpham/' . $sanpham->image);
-
         if ($sanpham->image && file_exists($imagePath)) {
             unlink($imagePath);
         }
-
         $sanpham->delete();
         return true;
     }
