@@ -166,17 +166,6 @@ class SanPhamController extends Controller
 
     public function destroy($id)
     {
-        // $sanPham = SanPham::findOrFail($id);
-
-        // $imagePath = public_path('source/image/sanpham/' . $sanPham->image);
-
-        // $imagePath = public_path('source/image/sanpham/' . $sanPham->image);
-        // if ($sanPham->image && file_exists($imagePath)) {
-        //     unlink($imagePath);
-        // }
-    
-        // $sanPham->delete();
-
         $sanpham = SanPham::findOrFail($id);
 
         $this->sanPhamService->destroy($sanpham);

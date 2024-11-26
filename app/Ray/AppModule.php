@@ -15,7 +15,7 @@ class AppModule extends AbstractModule
 
         // Apply LoggingInterceptor to SanPhamService methods
         $this->bindInterceptor(
-            $this->matcher->subclassesOf(SanPhamService::class), // Áp dụng cho các lớp con của SanPhamService
+            $this->matcher->subclassesOf(SanPhamService::class), 
             $this->matcher->any(), // Chặn mọi phương thức
             [LoggingInterceptor::class] // Sử dụng LoggingInterceptor
         );
